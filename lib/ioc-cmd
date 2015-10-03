@@ -34,6 +34,10 @@ __parse_cmd () {
             console)    __console "$2"
                         exit
                 ;;
+            copy)       __export_props "$@"
+                        __copy_jail "$2"
+                        exit
+                ;;
             create)     __export_props "$@"
                         __create_jail "$@"
                         exit

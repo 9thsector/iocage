@@ -8,6 +8,7 @@ SYNOPSIS
   iocage clean [-a|-b|-j]
   iocage clone UUID|TAG [UUID|TAG@snapshot] [property=value]
   iocage console UUID|TAG
+  iocage copy UUID|TAG [UUID|TAG@snapshot] [property=value]
   iocage create [-e] [base=[RELEASE|NAME]] [pkglist=file] [property=value]
   iocage deactivate ZPOOL
   iocage defaults
@@ -127,6 +128,13 @@ SUBCOMMANDS
   console UUID|TAG
 
     Execute login to have a shell inside the jail
+
+  copy UUID|TAG [UUID|TAG@snapshot] [property=value]
+
+    Copy jail identified by UUID (ZFS send). All properties will be reset on
+    the clone, defaults can be overriden by specifying properties on the fly.
+    Custom point-in-time snapshots can be used as a source for cloning in the
+    form of UUID@snapshot or TAG@snapshot.
 
   create [-e] [base=[RELEASE|NAME]] [property=value] [property=value]
 
