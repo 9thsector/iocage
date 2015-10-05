@@ -501,7 +501,6 @@ __clone_jail () {
 __copy_jail () {
     local name="$(echo $1 |  awk 'BEGIN { FS = "@" } ; { print $1 }')"
     local snapshot="$(echo $1 |  awk 'BEGIN { FS = "@" } ; { print $2 }')"
-    local _zfsconfig
 
     if [ -z $name ] ; then
         __die "missing UUID!"
@@ -510,7 +509,9 @@ __copy_jail () {
     local dataset="$(__find_jail $name)" || exit $?
 
     local fs_list="$(zfs list -rH -o name $dataset)"
-    _zfsconfig="$(__configure_jail generate)"
+    local _zfsconfig="$(__configure_jail generate)"
+    eval "zfs create -p ${_zfsconfig} \"${pool}/iocage/jails/${uuid}\""
+    #zfs create -p ${pool}/iocage/jails/${uuid}/root
 
     if [ -z "$snapshot" ] ; then
         zfs snapshot -r ${dataset}@${uuid}
@@ -519,9 +520,9 @@ __copy_jail () {
     for fs in $fs_list ; do
         cfs="$(echo $fs | sed s#$dataset#$pool/iocage/jails/$uuid#g)"
         if [ $(echo $cfs | grep data$ | wc -l) -eq 1 ] ; then
-            zfs send -o mountpoint=none -o jailed=on $fs@$snapshot $cfs
+            zfs send -p $fs@$snapshot | zfs recv -u -F $cfs
         else
-            eval "zfs send ${_zfsconfig} \"$fs@$snapshot\" \"$cfs\""
+            zfs send $fs@$snapshot | zfs recv -F $cfs
         fi
     done
 
@@ -529,7 +530,10 @@ __copy_jail () {
 
     #__configure_jail $pool/iocage/jails/$uuid
     mv $iocroot/jails/$uuid/fstab $iocroot/jails/$uuid/fstab.$name
-    touch $iocroot/jails/$uuid/fstab
+    cat $iocroot/jails/$uuid/fstab.$name | \
+    sed -E "s/[a-zA-Z0-9]{8,}-.*-.*-.*-[a-zA-Z0-9]{12,}/$uuid/g" \
+    > $iocroot/jails/${uuid}/fstab
+
 
     cat $iocroot/jails/${uuid}/root/etc/rc.conf | \
     sed -E "s/[a-zA-Z0-9]{8,}-.*-.*-.*-[a-zA-Z0-9]{12,}/$uuid/g" \
@@ -537,7 +541,11 @@ __copy_jail () {
 
     mv $iocroot/jails/${uuid}/rc.conf \
     $iocroot/jails/${uuid}/root/etc/rc.conf
-
+    if [ "$snapshot" == "$uuid" ]; then
+        # Destroy snapshot used to create the jail
+        zfs destroy -r ${dataset}@${uuid}
+        zfs destroy -r ${pool}/iocage/jails/${uuid}@${uuid}
+    fi
     echo "  Successfully created: ${uuid} (${tag})"
 
 }
