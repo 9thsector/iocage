@@ -511,7 +511,6 @@ __copy_jail () {
     local fs_list="$(zfs list -rH -o name $dataset)"
     local _zfsconfig="$(__configure_jail generate)"
     eval "zfs create -p ${_zfsconfig} \"${pool}/iocage/jails/${uuid}\""
-    #zfs create -p ${pool}/iocage/jails/${uuid}/root
 
     if [ -z "$snapshot" ] ; then
         zfs snapshot -r ${dataset}@${uuid}
@@ -530,9 +529,10 @@ __copy_jail () {
 
     #__configure_jail $pool/iocage/jails/$uuid
     mv $iocroot/jails/$uuid/fstab $iocroot/jails/$uuid/fstab.$name
-    cat $iocroot/jails/$uuid/fstab.$name | \
-    sed -E "s/[a-zA-Z0-9]{8,}-.*-.*-.*-[a-zA-Z0-9]{12,}/$uuid/g" \
-    > $iocroot/jails/${uuid}/fstab
+    #cat $iocroot/jails/$uuid/fstab.$name | \
+    #sed -E "s/[a-zA-Z0-9]{8,}-.*-.*-.*-[a-zA-Z0-9]{12,}/$uuid/g" \
+    #> $iocroot/jails/${uuid}/fstab
+    touch $iocroot/jails/${uuid}/fstab
 
 
     cat $iocroot/jails/${uuid}/root/etc/rc.conf | \
@@ -544,8 +544,8 @@ __copy_jail () {
     if [ "$snapshot" == "$uuid" ]; then
         # Destroy snapshot used to create the jail
         zfs destroy -r ${dataset}@${uuid}
-        zfs destroy -r ${pool}/iocage/jails/${uuid}@${uuid}
     fi
+    zfs destroy -r ${pool}/iocage/jails/${uuid}@${snapshot}
     echo "  Successfully created: ${uuid} (${tag})"
 
 }
