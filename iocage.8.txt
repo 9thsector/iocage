@@ -132,7 +132,7 @@ SUBCOMMANDS
   copy UUID|TAG [UUID|TAG@snapshot] [property=value]
 
     Copy jail identified by UUID (ZFS send). All properties will be reset on
-    the clone, defaults can be overriden by specifying properties on the fly.
+    the copy, defaults can be overriden by specifying properties on the fly.
     Custom point-in-time snapshots can be used as a source for cloning in the
     form of UUID@snapshot or TAG@snapshot.
 
